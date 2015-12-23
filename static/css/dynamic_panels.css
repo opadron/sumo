@@ -1,0 +1,28 @@
+
+.dynamic-panel-close-button {
+    float: right;
+    display: block;
+}
+
+.dynamic-panel-split-button {
+    position: relative;
+    margin: 5px;
+    margin-right: -45px;
+    width: 40px;
+    display: block;
+    left: -45px;
+    float: left;
+}
+
+.dynamic-panel-column {
+    padding: 5px;
+}
+
+.dynamic-panel-panel {
+    margin: 0px;
+}
+
+.rotate-90 {
+    transform: rotate(90deg);
+}
+
