@@ -5,19 +5,32 @@
     <link rel="stylesheet" href="/static/built/app.min.css">
     <script src="/static/built/libs.min.js"></script>
     <script src="/static/built/app.min.js"></script>
-    <script src="main.js"></script>
 
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css">
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet"
-    href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
-    crossorigin="anonymous">
+    <script src="lib/jquery/js/jquery.js"></script>
 
-    <script
-    src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-    crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="lib/gridster/css/jquery.gridster.min.css">
+    <script src="lib/gridster/js/jquery.gridster.min.js"></script>
 
-    <link rel="stylesheet" href="css/dynamic_panels.css">
-    <script src="js/dynamic_panels.js"></script>
+    <link rel="stylesheet" href="lib/main/css/main.css">
+    <script src="lib/main/js/main.js"></script>
+
+    <link rel="stylesheet" href="lib/dynamic-panels/css/dynamic_panels2.css">
+    <script src="lib/dynamic-panels/js/dynamic_panels2.js"></script>
+
+    <style>
+      button#add {
+        position: relative;
+        margin: 0px;
+        margin-right: -45px;
+        width: 40px;
+        display: block;
+        left: -45px;
+        float: left;
+      }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-default">
@@ -36,52 +49,27 @@
     <div class="modal fade" id="dialog-container"></div>
 
     <div class="container main">
+      <button id="add">+</button>
+      <div class="gridster">
+        <ul></ul>
+      </div>
     </div>
-    <style>
-    div.filler {
-        min-height: 150px;
-        min-width: 200px;
-    }
-    </style>
+
     <script>
-        var P;
-        $(function() {
-            function addTextFunctor(text) {
-                return function(panel) { panel.text(text); };
-            }
+      $(function() {
+        var dpanels = new DynamicPanels(".gridster");
+        $("#add").on("click", function() {
+          var appDiv = $("<div>").append(
+            $("<button>")
+              .text("run")
+              .on("click", function() {
+                console.log("run clicked");
+              })
+          );
 
-            var T = addTextFunctor;
-
-            P = new DynamicPanels(".main");
-
-            $(P).on("new-panel", function(event, panel) {
-                panel.append(
-                    $("<div>")
-                        .addClass("filler")
-                        .text("NEW PANEL!"));
-            });
-
-            (
-                P.append(P.row()
-                            .append(T("A"))
-                            .append(T("B"))
-                            .append(T("C")))
-                .append(P.row()
-                            .append(T("1"))
-                            .append(T("2"))
-                            .append(T("3")))
-                .append(P.row()
-                            .append(T("DO"))
-                            .append(T("RE"))
-                            .append(T("MI"))
-                            .append(T("FA")))
-                .append(P.row()
-                            .append(T("SO"))
-                            .append(T("LA"))
-                            .append(T("TI"))
-                            .append(T("DO")))
-            );
+          dpanels.add(appDiv);
         });
+      });
     </script>
 </body>
 </html>

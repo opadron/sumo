@@ -1,0 +1,130 @@
+
+import os
+import os.path
+
+from copy import deepcopy
+
+import cherrypy
+
+from girder.api import access
+from girder.api.describe import Description, describeRoute
+from girder.api.rest import filtermodel, loadmodel, Resource, RestException
+from girder.constants import AccessType, ROOT_DIR, STATIC_ROOT_DIR, SettingKey
+from girder.utility.model_importer import ModelImporter
+
+from girder.plugins.romanesco import utils as romanescoUtils
+
+from . import yaml_importer
+
+class Sumo(Resource):
+    # NOTE(opadron): 'tools.staticdir.dir' is set in load()
+    _cp_config = {"tools.staticdir.on": True,
+                  "tools.staticdir.index": "index.html"}
+
+    def __init__(self, info):
+        super(Sumo, self).__init__()
+        self.resourceName = "sumo"
+        self.route("POST", (), self.testSumo)
+
+    @access.user
+    # @loadmodel(map={"fileId": "file"}, model="file", level=AccessType.READ)
+    # @filtermodel(model="job", plugin="jobs")
+    @describeRoute(
+        Description("DESCRIPTION")
+        .notes("NOTE")
+        .param("itemId", "Item ID.", required=True)
+        .param("targetId", "Destination ID", required=True)
+        .param("numClusters", "Number of clusters to compute",
+            required=False, dataType=int, default=2)
+        .param("hasHeader", "Whether the first line of the file is a header",
+            required=False, dataType=bool, default=False)
+        .errorResponse()
+        .errorResponse("SOMETHING WENT WRONG", 403))
+    def testSumo(self, params):
+        self.requireParams(("itemId", "targetId", "numClusters"), params)
+
+        itemId = params["itemId"]
+        targetId = params["targetId"]
+        numClusters = params["numClusters"]
+        hasHeader = params["hasHeader"]
+
+        user = self.getCurrentUser()
+        apiUrl = os.path.dirname(cherrypy.url())
+
+        job = self.model("job", "jobs").createJob(
+            title="sumo kmeans test",
+            type="romanesco",
+            user=user,
+            handler="romanesco_handler")
+
+        item = self.model("item").load(itemId, user=user)
+        targetFolder = self.model("folder").load(targetId, user=user)
+
+        jobToken = self.model("job", "jobs").createJobToken(job)
+
+        job["kwargs"]["jobInfo"] = romanescoUtils.jobInfoSpec(
+            job=job,
+            token=jobToken,
+            logPrint=True)
+
+        from .job_specs.kmeans import doc as kmeans
+        inputs = deepcopy(kmeans["inputs"])
+
+        inputs["input_path"] = romanescoUtils.girderInputSpec(
+            item,
+            resourceType="item",
+            token=self.getCurrentToken())
+
+        inputs["has_header"]["data"] = hasHeader
+        inputs["num_clusters"]["data"] = int(numClusters)
+
+        outputs = {}
+        outputs["centers"] = romanescoUtils.girderOutputSpec(
+            parent=targetFolder,
+            # TODO(opadron): make a special-purpose token just for this job in
+            # case the user logs out before it finishes.
+            token=self.getCurrentToken(),
+            parentType="folder",
+            name="centers.csv",
+            dataType="table",
+            dataFormat="csv")
+
+        outputs["clusters"] = romanescoUtils.girderOutputSpec(
+            parent=targetFolder,
+            # TODO(opadron): make a special-purpose token just for this job in
+            # case the user logs out before it finishes.
+            token=self.getCurrentToken(),
+            parentType="folder",
+            name="clusters.csv",
+            dataType="table",
+            dataFormat="csv")
+
+        job["kwargs"].update(task=kmeans["task"],
+                             inputs=inputs,
+                             outputs=outputs)
+
+        job = self.model("job", "jobs").save(job)
+        self.model("job", "jobs").scheduleJob(job)
+
+        return self.model("job", "jobs").filter(job, user)
+
+def load(info):
+    Sumo._cp_config["tools.staticdir.dir"] = os.path.join(
+        info["pluginRootDir"], "static")
+
+    info["apiRoot"].sumo = Sumo(info)
+
+    # Move girder app to /girder, serve sumo app from /
+    (
+        info["serverRoot"],
+        info["serverRoot"].girder
+    ) = (
+        info["apiRoot"].sumo,
+        info["serverRoot"]
+    )
+
+    info["serverRoot"].api = info["serverRoot"].girder.api
+    info["serverRoot"].girder.api
+
+    # events.bind("model.challenge_phase.validate", "covalic", validatePhase)
+

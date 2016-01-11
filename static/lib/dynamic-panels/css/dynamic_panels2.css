@@ -1,0 +1,35 @@
+
+.gridster * {
+    margin: 0;
+    padding: 0;
+}
+
+.gridster ul {
+    background-color: #FBFBFB
+}
+
+.gridster ul li {
+    list-style-type: none;
+}
+
+.gridster {
+    margin: 0 auto;
+
+    opacity: 0.8;
+    transition: opacity: 0.6s;
+}
+
+.gridster .gs-w {
+    background: #FFFFFF;
+    cursor: pointer;
+}
+
+.gridster .player {
+    background: #F2F8FF;
+}
+
+.gridster .preview-holder {
+    border: none!important;
+    background: #C4DDFF!important;
+}
+

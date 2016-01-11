@@ -1,0 +1,19 @@
+#! /usr/bin/env bash
+#
+# small script for running the mongo docker container
+#
+# ./mongo-docker [data-dir]
+#
+#     data-dir: directory on the host filesystem on which to store the database
+#               data for persistence. (default: ./mongo-data)
+#
+
+data_dir="$1" ; shift
+if [ -z "$data_dir" ] ; then
+    data_dir="./mongo-data"
+fi
+
+data_dir="$( readlink -e "$data_dir" )"
+
+docker run -p 27017:27017 -v "$data_dir":/data/db mongo
+
